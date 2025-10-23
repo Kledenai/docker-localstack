@@ -10,14 +10,14 @@ services:
     environment:
       - SERVICES=${LOCALSTACK_SERVICES}
       - DEBUG=${LOCALSTACK_DEBUG}
-      - DATA_DIR=/tmp/localstack/data
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
       - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}
-      - EDGE_PORT=4566
       - LOCALSTACK_HOST=localhost
+      - PERSISTENCE=1
+      - DOCKER_HOST=unix:///var/run/docker.sock
     volumes:
-      - "./localstack:/tmp/localstack"
+      - "localstack_data:/var/lib/localstack"
       - "/var/run/docker.sock:/var/run/docker.sock"
     networks:
       - localstack
@@ -33,7 +33,7 @@ services:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
     volumes:
-      - ./minio/data:/data
+      - minio_data:/data
     networks:
       - localstack
 
@@ -54,8 +54,8 @@ services:
       - localstack
 
 volumes:
-  localstack:
-  minio:
+  localstack_data:
+  minio_data:
 
 networks:
   localstack:

@@ -50,13 +50,14 @@ NETWORK ID     NAME        DRIVER    SCOPE
 Everything working out we can go to the next step, follow the line below to able to run the localstack service:
 
 ```bash
-docker run -dp 4566:4566 -e SERVICES="s3,sqs,sns" -e DEBUG=1 -e AWS_ACCESS_KEY_ID="test" -e AWS_SECRET_ACCESS_KEY="test" -e AWS_DEFAULT_REGION="us-east-1" --volume localstack:/tmp/localstack --network localstack localstack/localstack:latest
+docker run -dp 4566:4566 -e SERVICES="s3,sqs,sns" -e DEBUG=1 -e PERSISTENCE=1 -e AWS_ACCESS_KEY_ID="test" -e AWS_SECRET_ACCESS_KEY="test" -e AWS_DEFAULT_REGION="us-east-1" --volume localstack:/var/lib/localstack --network localstack localstack/localstack:latest
 ```
 
 Everything working out we can go to the next step, follow the line below to able to run the minio service:
 
 ```bash
-docker run -dp 9000:9000 -dp 9001:9001 -e MINIO_ROOT_USER="minioadmin" -e MINIO_ROOT_PASSWORD="minioadmin" --volume ./minio/data:/data --network localstack quay.io/minio/minio server /data --console-address ":9001"
+docker volume create minio
+docker run -dp 9000:9000 -dp 9001:9001 -e MINIO_ROOT_USER="minioadmin" -e MINIO_ROOT_PASSWORD="minioadmin" --volume minio:/data --network localstack quay.io/minio/minio server /data --console-address ":9001"
 ```
 
 Note that we are using the same network as **localstack**, as we need to make the containers have this entry so that **minio** can access **localstack**.
@@ -94,14 +95,14 @@ services:
     environment:
       - SERVICES=${LOCALSTACK_SERVICES}
       - DEBUG=${LOCALSTACK_DEBUG}
-      - DATA_DIR=/tmp/localstack/data
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
       - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}
-      - EDGE_PORT=4566
       - LOCALSTACK_HOST=localhost
+      - PERSISTENCE=1
+      - DOCKER_HOST=unix:///var/run/docker.sock
     volumes:
-      - "./localstack:/tmp/localstack"
+      - "localstack_data:/var/lib/localstack"
       - "/var/run/docker.sock:/var/run/docker.sock"
     networks:
       - localstack
@@ -117,7 +118,7 @@ services:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
     volumes:
-      - ./minio/data:/data
+      - minio_data:/data
     networks:
       - localstack
 
@@ -138,8 +139,8 @@ services:
       - localstack
 
 volumes:
-  localstack:
-  minio:
+  localstack_data:
+  minio_data:
 
 networks:
   localstack:
